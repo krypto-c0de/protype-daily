@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Flow — Protótipo Completo</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F2F2F0;
+    --white: #FFFFFF;
+    --surface: #EBEBEA;
+    --border: #E0E0DE;
+    --border-strong: #CACAC8;
+    --text: #1A1A18;
+    --muted: #8A8A86;
+    --subtle: #C4C4C0;
+    --tag-work-bg: #E0E9E6;
+    --tag-work-text: #2A5C4E;
+    --tag-urgent-bg: #F5EDE0;
+    --tag-urgent-text: #8C4A1A;
+    --tag-personal-bg: #E8E8E6;
+    --done: #B0B0AC;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #E5E5E3;
+    color: var(--text);
+    min-height: 100vh;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 15% 0%, rgba(255,255,255,0.55) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 85% 100%, rgba(200,200,195,0.35) 0%, transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── NAV TABS ── */
+  .tab-nav {
+    position: relative; z-index: 10;
+    display: flex; justify-content: center; align-items: center;
+    gap: 6px; padding: 28px 0 0;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    padding: 9px 20px; border-radius: 99px;
+    border: 1px solid var(--border-strong);
+    background: rgba(255,255,255,0.6);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px; font-weight: 500;
+    color: var(--muted); cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex; align-items: center; gap: 6px;
+    backdrop-filter: blur(8px);
+  }
+  .tab-btn:hover { background: rgba(255,255,255,0.9); color: var(--text); }
+  .tab-btn.active {
+    background: var(--text); color: #fff;
+    border-color: var(--text);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  }
+  .tab-icon { font-size: 14px; }
+
+  /* ── SCREEN WRAPPER ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── SCENE ── */
+  .scene-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 36px 20px 60px;
+    position: relative; z-index: 1;
+  }
+  .scene { display: flex; align-items: flex-start; position: relative; }
+
+  /* ── BRAND HEADER ── */
+  .brand-header { text-align: center; margin-bottom: 4px; }
+  .app-name {
+    font-family: 'Instrument Serif', serif;
+    font-size: 32px; font-style: italic; color: var(--text);
+  }
+  .screen-label {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--muted); margin-top: 2px;
+  }
+
+  /* ── DEVICE ── */
+  .device {
+    width: 375px; background: var(--bg); border-radius: 48px;
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 0 0 8px #DDDDDB, 0 40px 100px rgba(0,0,0,0.15);
+    overflow: hidden; position: relative;
+  }
+  .notch { width: 120px; height: 34px; background: var(--text); border-radius: 0 0 20px 20px; margin: 0 auto; }
+  .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 28px 6px; }
+  .status-bar .time { font-size: 15px; font-weight: 600; color: var(--text); }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(242,242,240,0.96); backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    padding: 10px 0 26px; display: flex; justify-content: space-around; align-items: center;
+  }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px 16px; }
+  .nav-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+  .nav-label { font-size: 10px; font-weight: 500; color: var(--subtle); }
+  .nav-item.active .nav-label { color: var(--text); font-weight: 600; }
+  .nav-dot { width: 4px; height: 4px; background: var(--text); border-radius: 50%; margin-top: 1px; }
+
+  /* ── APP CONTENT ── */
+  .app { padding-bottom: 100px; }
+  .page-header { padding: 18px 24px 0; display: flex; align-items: flex-end; justify-content: space-between; }
+  .page-title-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+  .page-title { font-family: 'Instrument Serif', serif; font-size: 28px; font-style: italic; color: var(--text); }
+  .section { padding: 20px 24px 0; }
+  .section-title {
+    font-size: 10.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--subtle); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .divider { height: 1px; background: var(--border); margin: 14px 24px 0; }
+
+  /* ── SWITCHER ── */
+  .header { padding: 20px 24px 0; }
+  .switcher {
+    display: flex; background: var(--white); border-radius: 14px; padding: 3px; gap: 2px;
+    border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .switcher-btn {
+    flex: 1; padding: 8px 0; border-radius: 11px; border: none; background: transparent;
+    color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .switcher-btn.active { background: var(--text); color: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+  .pip { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+
+  /* ── TODAY HEADER ── */
+  .today-header { padding: 22px 24px 0; }
+  .today-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .today-title { font-family: 'Instrument Serif', serif; font-size: 34px; line-height: 1.1; color: var(--text); font-style: italic; }
+  .today-title span { font-style: normal; }
+
+  /* ── PROGRESS ── */
+  .progress-wrap { padding: 16px 24px 0; display: flex; align-items: center; gap: 10px; }
+  .progress-bar { flex: 1; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 45%; background: var(--text); border-radius: 99px; }
+  .progress-label { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+  .progress-label strong { color: var(--text); }
+
+  /* ── TASK CARD ── */
+  .task-card {
+    background: var(--white); border: 1px solid var(--border); border-radius: 14px;
+    padding: 13px 14px; margin-bottom: 7px;
+    display: flex; align-items: center; gap: 11px; cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .task-card.done { background: transparent; box-shadow: none; border-color: transparent; opacity: 0.5; }
+  .task-card.done .task-title { text-decoration: line-through; color: var(--done); }
+  .check-btn {
+    width: 21px; height: 21px; border-radius: 50%;
+    border: 1.5px solid var(--border-strong); background: transparent;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .task-card.done .check-btn { background: var(--text); border-color: var(--text); }
+  .check-icon { width: 9px; height: 9px; opacity: 0; }
+  .task-card.done .check-icon { opacity: 1; }
+  .check-icon path { stroke: #fff; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .task-body { flex: 1; min-width: 0; }
+  .task-title { font-size: 13.5px; font-weight: 500; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-meta { display: flex; align-items: center; gap: 6px; }
+  .task-tag { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 99px; }
+  .tag-personal { background: var(--tag-personal-bg); color: var(--muted); }
+  .tag-work { background: var(--tag-work-bg); color: var(--tag-work-text); }
+  .tag-urgent { background: var(--tag-urgent-bg); color: var(--tag-urgent-text); }
+  .task-time { font-size: 11px; color: var(--subtle); }
+
+  /* ── QUICK ADD ── */
+  .quick-add {
+    margin: 16px 24px 0; display: flex; align-items: center; gap: 10px;
+    background: var(--white); border: 1.5px dashed var(--border-strong);
+    border-radius: 14px; padding: 13px 14px; cursor: pointer;
+  }
+  .add-icon { width: 21px; height: 21px; border-radius: 50%; border: 1.5px solid var(--border-strong); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--muted); flex-shrink: 0; }
+  .quick-add-text { font-size: 13.5px; color: var(--subtle); }
+  .quick-shortcut { margin-left: auto; font-size: 10px; color: var(--subtle); background: var(--surface); padding: 2px 7px; border-radius: 5px; border: 1px solid var(--border); }
+
+  /* ── STREAK ── */
+  .streak-banner { margin: 16px 24px 0; background: var(--text); border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+  .streak-emoji { font-size: 20px; }
+  .streak-text { flex: 1; }
+  .streak-text strong { font-size: 12.5px; font-weight: 600; display: block; color: #fff; }
+  .streak-text span { font-size: 11px; color: rgba(255,255,255,0.5); }
+  .streak-badge { font-family: 'Instrument Serif', serif; font-size: 26px; color: #fff; font-style: italic; }
+
+  /* ── ADD TASK SHEET ── */
+  .bg-screen { padding: 16px 24px; opacity: 0.28; pointer-events: none; }
+  .bg-row { height: 52px; background: var(--white); border-radius: 14px; margin-bottom: 7px; border: 1px solid var(--border); }
+  .bg-row.short { width: 65%; }
+  .sheet-overlay { position: absolute; inset: 0; background: rgba(26,26,24,0.18); backdrop-filter: blur(2px); display: flex; align-items: flex-end; }
+  .sheet { width: 100%; background: var(--white); border-radius: 24px 24px 0 0; padding: 0 0 34px; box-shadow: 0 -8px 40px rgba(0,0,0,0.1); }
+  .sheet-handle { width: 36px; height: 4px; background: var(--border-strong); border-radius: 99px; margin: 12px auto 0; }
+  .sheet-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 0; }
+  .sheet-title { font-family: 'Instrument Serif', serif; font-size: 19px; font-style: italic; color: var(--text); }
+  .sheet-close { width: 28px; height: 28px; border-radius: 50%; background: var(--surface); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 16px; }
+  .task-input-wrap { padding: 14px 20px 0; }
+  .task-input-display { font-family: 'DM Sans', sans-serif; font-size: 17px; font-weight: 500; color: var(--text); line-height: 1.4; }
+  .cursor { display: inline-block; width: 2px; height: 18px; background: var(--text); border-radius: 1px; vertical-align: middle; margin-left: 1px; animation: blink 1s step-end infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .options-row { padding: 12px 20px 0; display: flex; gap: 8px; flex-wrap: wrap; }
+  .option-chip { display: flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 99px; border: 1px solid var(--border); background: var(--white); font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; white-space: nowrap; }
+  .option-chip.sel-warm { background: var(--tag-urgent-bg); border-color: transparent; color: var(--tag-urgent-text); }
+  .option-chip.sel-soft { background: var(--tag-work-bg); border-color: transparent; color: var(--tag-work-text); }
+  .chip-icon { font-size: 13px; }
+  .context-row { padding: 12px 20px 0; display: flex; gap: 6px; }
+  .context-btn { flex: 1; padding: 9px 0; border-radius: 10px; border: 1px solid var(--border); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .context-btn.active { background: var(--text); border-color: var(--text); color: #fff; }
+  .ctx-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+  .checklist-row { padding: 12px 20px 0; }
+  .checklist-toggle { display: flex; align-items: center; gap: 10px; padding: 11px 14px; background: var(--surface); border-radius: 12px; cursor: pointer; border: 1px solid var(--border); }
+  .toggle-icon { font-size: 15px; }
+  .toggle-label { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; }
+  .toggle-sub { font-size: 11px; color: var(--muted); }
+  .toggle-arrow { color: var(--subtle); font-size: 13px; }
+  .checklist-items { padding: 8px 20px 0; }
+  .checklist-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .checklist-item:last-child { border-bottom: none; }
+  .item-check { width: 17px; height: 17px; border-radius: 4px; border: 1.5px solid var(--border-strong); flex-shrink: 0; }
+  .item-text { font-size: 13px; color: var(--text); flex: 1; }
+  .item-text.placeholder { color: var(--subtle); }
+  .item-drag { color: var(--subtle); font-size: 13px; }
+  .add-checklist-item { display: flex; align-items: center; gap: 10px; padding: 8px 20px 0; cursor: pointer; }
+  .add-item-icon { width: 17px; height: 17px; border-radius: 4px; border: 1.5px dashed var(--border-strong); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--subtle); flex-shrink: 0; }
+  .add-item-text { font-size: 13px; color: var(--subtle); }
+  .submit-row { padding: 16px 20px 0; display: flex; align-items: center; gap: 10px; }
+  .submit-btn { flex: 1; padding: 13px; background: var(--text); color: #fff; border: none; border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .more-btn { width: 46px; height: 46px; border-radius: 14px; border: 1px solid var(--border); background: var(--white); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 18px; }
+
+  /* ── AGENDA ── */
+  .month-nav { display: flex; align-items: center; gap: 8px; }
+  .month-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); background: var(--white); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 13px; }
+  .month-label { font-size: 12px; font-weight: 500; color: var(--text); }
+  .week-strip { padding: 16px 20px 0; display: flex; gap: 4px; }
+  .day-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 4px; border-radius: 12px; cursor: pointer; }
+  .day-col.active { background: var(--text); }
+  .day-name { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .day-col.active .day-name { color: rgba(255,255,255,0.6); }
+  .day-num { font-size: 16px; font-weight: 600; color: var(--text); }
+  .day-col.active .day-num { color: #fff; }
+  .day-dot { width: 4px; height: 4px; border-radius: 50%; }
+  .dot-many { background: var(--text); }
+  .dot-few { background: var(--subtle); }
+  .day-col.active .dot-many,.day-col.active .dot-few { background: rgba(255,255,255,0.6); }
+  .timeline { padding: 14px 0 0; }
+  .time-block { display: flex; gap: 0; padding: 0 0 0 24px; margin-bottom: 4px; position: relative; }
+  .time-label { width: 44px; flex-shrink: 0; font-size: 10.5px; color: var(--subtle); font-weight: 500; padding-top: 2px; text-align: right; padding-right: 10px; }
+  .time-line { position: absolute; left: 68px; top: 8px; right: 0; height: 1px; background: var(--border); }
+  .time-events { flex: 1; padding: 0 16px 0 10px; min-height: 20px; }
+  .event { border-radius: 10px; padding: 9px 12px; margin-bottom: 4px; cursor: pointer; border-left: 3px solid transparent; }
+  .event.work { background: var(--tag-work-bg); border-left-color: #2A5C4E; }
+  .event.personal { background: var(--tag-personal-bg); border-left-color: #5A5A56; }
+  .event.urgent { background: var(--tag-urgent-bg); border-left-color: #8C4A1A; }
+  .event.dark { background: var(--text); border-left-color: transparent; }
+  .event-title { font-size: 12.5px; font-weight: 600; margin-bottom: 2px; }
+  .event.work .event-title { color: var(--tag-work-text); }
+  .event.personal .event-title { color: #3A3A36; }
+  .event.urgent .event-title { color: var(--tag-urgent-text); }
+  .event.dark .event-title { color: #fff; }
+  .event-meta { font-size: 10.5px; display: flex; align-items: center; gap: 6px; }
+  .event.work .event-meta { color: rgba(42,92,78,0.7); }
+  .event.personal .event-meta { color: var(--muted); }
+  .event.urgent .event-meta { color: rgba(140,74,26,0.7); }
+  .event.dark .event-meta { color: rgba(255,255,255,0.5); }
+  .event-tag { padding: 1px 6px; border-radius: 99px; font-size: 9.5px; font-weight: 500; }
+  .event.work .event-tag { background: rgba(42,92,78,0.12); color: var(--tag-work-text); }
+  .event.urgent .event-tag { background: rgba(140,74,26,0.12); color: var(--tag-urgent-text); }
+  .event.dark .event-tag { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); }
+  .allday-row { display: flex; padding: 0 16px 0 68px; margin-bottom: 10px; }
+  .allday-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 500; color: var(--muted); }
+  .free-slot { display: flex; padding: 0 0 0 68px; margin: 2px 16px 2px 0; }
+  .free-label { font-size: 10px; color: var(--subtle); font-style: italic; }
+  .now-line { display: flex; align-items: center; padding: 0 16px 0 24px; margin: 0 0 4px; }
+  .now-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text); flex-shrink: 0; margin-left: 36px; margin-right: 4px; }
+  .now-rule { flex: 1; height: 1.5px; background: var(--text); }
+
+  /* ── ANNOTATIONS ── */
+  .annotations { position: absolute; top: 0; left: 400px; width: 240px; }
+  .annotation { display: flex; align-items: flex-start; opacity: 0; animation: fadeIn 0.4s ease forwards; }
+  .annotation-line { width: 36px; height: 1px; background: var(--border-strong); margin-top: 9px; flex-shrink: 0; }
+  .annotation-content { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 7px 11px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .annotation-title { font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 1px; }
+  .annotation-desc { font-size: 10.5px; color: var(--muted); line-height: 1.5; }
+  @keyframes fadeIn { from { opacity:0; transform:translateX(-6px); } to { opacity:1; transform:translateX(0); } }
+</style>
+</head>
+<body>
+
+<!-- TAB NAV -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('hoje')"><span class="tab-icon">🏠</span> Hoje</button>
+  <button class="tab-btn" onclick="showTab('adicionar')"><span class="tab-icon">➕</span> Adicionar Tarefa</button>
+  <button class="tab-btn" onclick="showTab('agenda')"><span class="tab-icon">📅</span> Agenda</button>
+</div>
+
+<!-- ══════════════════════════════════════
+     TELA 1 — HOJE
+════════════════════════════════════════ -->
+<div id="screen-hoje" class="screen active">
+  <div class="scene-wrap">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-right:0">
+      <div class="brand-header">
+        <div class="app-name">daily flow</div>
+        <div class="screen-label">Tela Principal — Hoje</div>
+      </div>
+      <div class="scene">
+        <div class="device">
+          <div class="notch"></div>
+          <div class="status-bar">
+            <span class="time">09:41</span>
+            <svg width="40" height="10" viewBox="0 0 40 10"><rect x="0" y="2" width="5" height="8" rx="1" fill="#C4C4C0"/><rect x="8" y="1" width="5" height="9" rx="1" fill="#8A8A86"/><rect x="16" y="0" width="5" height="10" rx="1" fill="#3A3A38"/><rect x="25" y="2" width="15" height="7" rx="2" fill="none" stroke="#C4C4C0" stroke-width="1"/><rect x="26" y="3.5" width="10" height="4" rx="1" fill="#3A3A38"/></svg>
+          </div>
+          <div class="app">
+            <div class="header">
+              <div class="switcher">
+                <button class="switcher-btn active"><div class="pip"></div> Pessoal</button>
+                <button class="switcher-btn"><div class="pip"></div> Trabalho</button>
+                <button class="switcher-btn">⊕ Tudo</button>
+              </div>
+            </div>
+            <div class="today-header">
+              <div class="today-label">Sexta-feira, 6 mar</div>
+              <div class="today-title"><em>Bom dia,</em> <span>Ana 👋</span></div>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-bar"><div class="progress-fill"></div></div>
+              <div class="progress-label"><strong>5</strong> de 11 tarefas</div>
+            </div>
+            <div class="section">
+              <div class="section-title">Para hoje</div>
+              <div class="task-card"><button class="check-btn"><svg class="check-icon" viewBox="0 0 9 9"><path d="M1.5 4.5l2 2L7.5 2"/></svg></button><div class="task-body"><div class="task-title">Revisar proposta do cliente</div><div class="task-meta"><span class="task-tag tag-urgent">Urgente</span><span class="task-time">10:00</span></div></div></div>
+              <div class="task-card"><button class="check-btn"><svg class="check-icon" viewBox="0 0 9 9"><path d="M1.5 4.5l2 2L7.5 2"/></svg></button><div class="task-body"><div class="task-title">Stand-up com time de design</div><div class="task-meta"><span class="task-tag tag-work">Trabalho</span><span class="task-time">11:30</span></div></div></div>
+              <div class="task-card"><button class="check-btn"><svg class="check-icon" viewBox="0 0 9 9"><path d="M1.5 4.5l2 2L7.5 2"/></svg></button><div class="task-body"><div class="task-title">Comprar ingredientes para o jantar</div><div class="task-meta"><span class="task-tag tag-personal">Pessoal</span><span class="task-time">Tarde</span></div></div></div>
+            </div>
+            <div class="section">
+              <div class="section-title">Concluídas</div>
+              <div class="task-card done"><button class="check-btn"><svg class="check-icon" viewBox="0 0 9 9"><path d="M1.5 4.5l2 2L7.5 2"/></svg></button><div class="task-body"><div class="task-title">Responder e-mails da manhã</div><div class="task-meta"><span class="task-time">08:15</span></div></div></div>
+              <div class="task-card done"><button class="check-btn"><svg class="check-icon" viewBox="0 0 9 9"><path d="M1.5 4.5l2 2L7.5 2"/></svg></button><div class="task-body"><div class="task-title">Enviar relatório semanal</div><div class="task-meta"><span class="task-time">09:00</span></div></div></div>
+            </div>
+            <div class="quick-add"><div class="add-icon">+</div><div class="quick-add-text">Adicionar tarefa...</div><div class="quick-shortcut">⌘K</div></div>
+            <div class="streak-banner"><div class="streak-emoji">🔥</div><div class="streak-text"><strong>Sequência ativa!</strong><span>7 dias completando tarefas</span></div><div class="streak-badge">7d</div></div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item active"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10L10 3L17 10V17H13V13H7V17H3V10Z" stroke="#1A1A18" stroke-width="1.5" stroke-linejoin="round"/></svg></div><div class="nav-label">Hoje</div><div class="nav-dot"></div></div>
+            <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="2" stroke="#C4C4C0" stroke-width="1.5"/><path d="M7 2V5M13 2V5M3 8H17" stroke="#C4C4C0" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="nav-label">Agenda</div></div>
+            <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1.5" stroke="#C4C4C0" stroke-width="1.5"/><rect x="11" y="3" width="6" height="6" rx="1.5" stroke="#C4C4C0" stroke-width="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.5" stroke="#C4C4C0" stroke-width="1.5"/><rect x="11" y="11" width="6" height="6" rx="1.5" stroke="#C4C4C0" stroke-width="1.5"/></svg></div><div class="nav-label">Projetos</div></div>
+            <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="8" r="3.5" stroke="#C4C4C0" stroke-width="1.5"/><path d="M4 17C4 14.2 6.7 12 10 12C13.3 12 16 14.2 16 17" stroke="#C4C4C0" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="nav-label">Perfil</div></div>
+          </div>
+        </div>
+        <!-- annotations hoje -->
+        <div class="annotations">
+          <div class="annotation" style="margin-top:92px;animation-delay:0.1s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Switcher de contexto</div><div class="annotation-desc">Alterna Pessoal / Trabalho / Tudo com 1 toque. Preto = ativo</div></div></div>
+          <div class="annotation" style="margin-top:62px;animation-delay:0.2s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Saudação personalizada</div><div class="annotation-desc">Serif em itálico — tom acolhedor, não clínico</div></div></div>
+          <div class="annotation" style="margin-top:44px;animation-delay:0.3s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Barra de progresso</div><div class="annotation-desc">Linha fina discreta — motiva sem pressionar</div></div></div>
+          <div class="annotation" style="margin-top:66px;animation-delay:0.4s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Cards brancos elevados</div><div class="annotation-desc">Hierarquia natural sobre fundo cinza</div></div></div>
+          <div class="annotation" style="margin-top:52px;animation-delay:0.5s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Tags por contexto</div><div class="annotation-desc">Verde = trabalho · bege = pessoal · laranja = urgente</div></div></div>
+          <div class="annotation" style="margin-top:52px;animation-delay:0.6s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Concluídas suaves</div><div class="annotation-desc">Sem card, só riscado — celebram sem poluir</div></div></div>
+          <div class="annotation" style="margin-top:110px;animation-delay:0.7s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Streak invertido</div><div class="annotation-desc">Único bloco preto — destaca a conquista do dia</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TELA 2 — ADICIONAR TAREFA
+════════════════════════════════════════ -->
+<div id="screen-adicionar" class="screen">
+  <div class="scene-wrap">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div class="brand-header">
+        <div class="app-name">daily flow</div>
+        <div class="screen-label">Adicionar Tarefa</div>
+      </div>
+      <div class="scene">
+        <div class="device">
+          <div class="notch"></div>
+          <div class="status-bar"><span class="time">09:41</span><svg width="40" height="10" viewBox="0 0 40 10"><rect x="0" y="2" width="5" height="8" rx="1" fill="#C4C4C0"/><rect x="8" y="1" width="5" height="9" rx="1" fill="#8A8A86"/><rect x="16" y="0" width="5" height="10" rx="1" fill="#3A3A38"/><rect x="25" y="2" width="15" height="7" rx="2" fill="none" stroke="#C4C4C0" stroke-width="1"/><rect x="26" y="3.5" width="10" height="4" rx="1" fill="#3A3A38"/></svg></div>
+          <div class="bg-screen"><div class="bg-row"></div><div class="bg-row short"></div><div class="bg-row"></div><div class="bg-row short"></div><div class="bg-row"></div></div>
+          <div class="sheet-overlay">
+            <div class="sheet">
+              <div class="sheet-handle"></div>
+              <div class="sheet-header"><div class="sheet-title">Nova tarefa</div><button class="sheet-close">×</button></div>
+              <div class="task-input-wrap"><div class="task-input-display">Revisar apresentação<span class="cursor"></span></div></div>
+              <div class="divider" style="margin-top:14px"></div>
+              <div class="options-row">
+                <div class="option-chip sel-warm"><span class="chip-icon">⏰</span> Hoje, 10:00</div>
+                <div class="option-chip sel-soft"><span class="chip-icon">🏷</span> Trabalho</div>
+                <div class="option-chip"><span class="chip-icon">🔔</span> Lembrete</div>
+                <div class="option-chip"><span class="chip-icon">📎</span> Anexo</div>
+              </div>
+              <div class="context-row">
+                <button class="context-btn"><div class="ctx-dot"></div> Pessoal</button>
+                <button class="context-btn active"><div class="ctx-dot"></div> Trabalho</button>
+              </div>
+              <div class="checklist-row"><div class="checklist-toggle"><span class="toggle-icon">☑️</span><span class="toggle-label">Checklist</span><span class="toggle-sub">3 itens</span><span class="toggle-arrow">›</span></div></div>
+              <div class="checklist-items">
+                <div class="checklist-item"><div class="item-check"></div><div class="item-text">Atualizar slides de dados</div><div class="item-drag">⋮⋮</div></div>
+                <div class="checklist-item"><div class="item-check"></div><div class="item-text">Revisar com o gerente</div><div class="item-drag">⋮⋮</div></div>
+                <div class="checklist-item"><div class="item-check"></div><div class="item-text placeholder">Adicionar item...</div><div class="item-drag">⋮⋮</div></div>
+              </div>
+              <div class="add-checklist-item"><div class="add-item-icon">+</div><div class="add-item-text">Novo item de checklist</div></div>
+              <div class="submit-row"><button class="submit-btn">✓ Salvar tarefa</button><button class="more-btn">···</button></div>
+            </div>
+          </div>
+        </div>
+        <!-- annotations add -->
+        <div class="annotations">
+          <div class="annotation" style="margin-top:240px;animation-delay:0.1s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Bottom sheet</div><div class="annotation-desc">Sobe sobre a lista — contexto mantido, sem troca de tela</div></div></div>
+          <div class="annotation" style="margin-top:48px;animation-delay:0.2s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Campo limpo</div><div class="annotation-desc">Sem borda, sem label — foco total no que está digitando</div></div></div>
+          <div class="annotation" style="margin-top:52px;animation-delay:0.3s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Chips rápidos</div><div class="annotation-desc">Data, categoria, lembrete e anexo em um gesto horizontal</div></div></div>
+          <div class="annotation" style="margin-top:48px;animation-delay:0.4s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Switcher de contexto</div><div class="annotation-desc">Pessoal / Trabalho — preto = selecionado</div></div></div>
+          <div class="annotation" style="margin-top:58px;animation-delay:0.5s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Checklist nativo</div><div class="annotation-desc">Expansível dentro da tarefa — sem nova tela</div></div></div>
+          <div class="annotation" style="margin-top:68px;animation-delay:0.6s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Itens arrastáveis</div><div class="annotation-desc">Ícone de drag à direita para reordenar</div></div></div>
+          <div class="annotation" style="margin-top:42px;animation-delay:0.7s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">CTA + opções avançadas</div><div class="annotation-desc">"···" expande detalhes sem poluir o fluxo principal</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TELA 3 — AGENDA
+════════════════════════════════════════ -->
+<div id="screen-agenda" class="screen">
+  <div class="scene-wrap">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div class="brand-header">
+        <div class="app-name">daily flow</div>
+        <div class="screen-label">Agenda Semanal</div>
+      </div>
+      <div class="scene">
+        <div class="device">
+          <div class="notch"></div>
+          <div class="status-bar"><span class="time">09:41</span><svg width="40" height="10" viewBox="0 0 40 10"><rect x="0" y="2" width="5" height="8" rx="1" fill="#C4C4C0"/><rect x="8" y="1" width="5" height="9" rx="1" fill="#8A8A86"/><rect x="16" y="0" width="5" height="10" rx="1" fill="#3A3A38"/><rect x="25" y="2" width="15" height="7" rx="2" fill="none" stroke="#C4C4C0" stroke-width="1"/><rect x="26" y="3.5" width="10" height="4" rx="1" fill="#3A3A38"/></svg></div>
+          <div class="app">
+            <div class="page-header">
+              <div><div class="page-title-label">Março 2026</div><div class="page-title">Esta semana</div></div>
+              <div class="month-nav"><button class="month-btn">‹</button><span class="month-label">Mar</span><button class="month-btn">›</button></div>
+            </div>
+            <div class="week-strip">
+              <div class="day-col"><div class="day-name">Seg</div><div class="day-num">2</div><div class="day-dot dot-few"></div></div>
+              <div class="day-col"><div class="day-name">Ter</div><div class="day-num">3</div><div class="day-dot dot-many"></div></div>
+              <div class="day-col"><div class="day-name">Qua</div><div class="day-num">4</div><div class="day-dot dot-few"></div></div>
+              <div class="day-col"><div class="day-name">Qui</div><div class="day-num">5</div><div class="day-dot dot-many"></div></div>
+              <div class="day-col active"><div class="day-name">Sex</div><div class="day-num">6</div><div class="day-dot dot-many"></div></div>
+              <div class="day-col"><div class="day-name">Sáb</div><div class="day-num">7</div><div class="day-dot dot-few"></div></div>
+              <div class="day-col"><div class="day-name">Dom</div><div class="day-num">8</div><div class="day-dot"></div></div>
+            </div>
+            <div class="divider"></div>
+            <div class="timeline">
+              <div class="allday-row"><div class="allday-chip">📌 Prazo: Proposta</div></div>
+              <div class="time-block"><div class="time-label">08:00</div><div class="time-line"></div><div class="time-events"><div class="event personal"><div class="event-title">Rotina matinal</div><div class="event-meta"><span>⏱ 30 min</span><span class="event-tag">Pessoal</span></div></div></div></div>
+              <div class="time-block"><div class="time-label">09:00</div><div class="time-line"></div><div class="time-events"><div class="free-slot"><span class="free-label">— disponível</span></div></div></div>
+              <div class="now-line"><div class="now-dot"></div><div class="now-rule"></div></div>
+              <div class="time-block"><div class="time-label">10:00</div><div class="time-line"></div><div class="time-events"><div class="event urgent"><div class="event-title">Revisar proposta do cliente</div><div class="event-meta"><span>⏱ 1h</span><span class="event-tag">Urgente</span></div></div></div></div>
+              <div class="time-block"><div class="time-label">11:30</div><div class="time-line"></div><div class="time-events"><div class="event work"><div class="event-title">Stand-up com time de design</div><div class="event-meta"><span>⏱ 30 min</span><span class="event-tag">Trabalho</span></div></div></div></div>
+              <div class="time-block"><div class="time-label">13:00</div><div class="time-line"></div><div class="time-events"><div class="free-slot"><span class="free-label">— almoço / livre</span></div></div></div>
+              <div class="time-block"><div class="time-label">15:00</div><div class="time-line"></div><div class="time-events"><div class="event dark"><div class="event-title">Revisão semanal</div><div class="event-meta"><span>⏱ 45 min</span><span class="event-tag">Trabalho</span></div></div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10L10 3L17 10V17H13V13H7V17H3V10Z" stroke="#C4C4C0" stroke-width="1.5" stroke-linejoin="round"/></svg></div><div class="nav-label">Hoje</div></div>
+            <div class="nav-item active"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="2" stroke="#1A1A18" stroke-width="1.5"/><path d="M7 2V5M13 2V5M3 8H17" stroke="#1A1A18" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="nav-label">Agenda</div><div class="nav-dot"></div></div>
+            <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1.5" stroke="#C4C4C0" stroke-width="1.5"/><rect x="11" y="3" width="6" height="6" rx="1.5" stroke="#C4C4C0" stroke-width="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.5" stroke="#C4C4C0" stroke-width="1.5"/><rect x="11" y="11" width="6" height="6" rx="1.5" stroke="#C4C4C0" stroke-width="1.5"/></svg></div><div class="nav-label">Projetos</div></div>
+            <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="8" r="3.5" stroke="#C4C4C0" stroke-width="1.5"/><path d="M4 17C4 14.2 6.7 12 10 12C13.3 12 16 14.2 16 17" stroke="#C4C4C0" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="nav-label">Perfil</div></div>
+          </div>
+        </div>
+        <!-- annotations agenda -->
+        <div class="annotations">
+          <div class="annotation" style="margin-top:92px;animation-delay:0.1s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Strip semanal</div><div class="annotation-desc">7 dias visíveis, pontinhos mostram carga de cada dia</div></div></div>
+          <div class="annotation" style="margin-top:56px;animation-delay:0.2s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Dia ativo em preto</div><div class="annotation-desc">Identificação imediata de onde você está na semana</div></div></div>
+          <div class="annotation" style="margin-top:90px;animation-delay:0.3s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Prazo all-day</div><div class="annotation-desc">Deadlines fixados no topo — nunca se perdem na timeline</div></div></div>
+          <div class="annotation" style="margin-top:56px;animation-delay:0.4s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Linha do agora</div><div class="annotation-desc">Ponto + linha preta — localização imediata no tempo</div></div></div>
+          <div class="annotation" style="margin-top:56px;animation-delay:0.5s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Cores consistentes</div><div class="annotation-desc">Mesmas tags da tela Hoje — linguagem visual unificada</div></div></div>
+          <div class="annotation" style="margin-top:52px;animation-delay:0.6s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Slots livres visíveis</div><div class="annotation-desc">"disponível" em itálico — ajuda a planejar o dia</div></div></div>
+          <div class="annotation" style="margin-top:56px;animation-delay:0.7s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Evento destaque em preto</div><div class="annotation-desc">Revisão semanal em bloco escuro — prioridade visual clara</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showTab(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+    event.currentTarget.classList.add('active');
+    // re-trigger annotations animation
+    document.querySelectorAll('#screen-' + id + ' .annotation').forEach((a, i) => {
+      a.style.animation = 'none';
+      a.offsetHeight;
+      a.style.animation = '';
+    });
+  }
+</script>
+</body>
+</html>
