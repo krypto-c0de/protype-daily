@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Flow — Protótipo Completo</title>
+<title>DailyFlow — Protótipo</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -21,6 +21,7 @@
     --tag-urgent-text: #8C4A1A;
     --tag-personal-bg: #E8E8E6;
     --done: #B0B0AC;
+    --device-h: 780px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -28,6 +29,7 @@
     background: #E5E5E3;
     color: var(--text);
     min-height: 100vh;
+    overflow-x: hidden;
   }
   body::before {
     content: ''; position: fixed; inset: 0;
@@ -37,83 +39,71 @@
     pointer-events: none; z-index: 0;
   }
 
-  /* ── NAV TABS ── */
-  .tab-nav {
-    position: relative; z-index: 10;
-    display: flex; justify-content: center; align-items: center;
-    gap: 6px; padding: 28px 0 0;
-    flex-wrap: wrap;
-  }
-  .tab-btn {
-    padding: 9px 20px; border-radius: 99px;
-    border: 1px solid var(--border-strong);
-    background: rgba(255,255,255,0.6);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12.5px; font-weight: 500;
-    color: var(--muted); cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex; align-items: center; gap: 6px;
-    backdrop-filter: blur(8px);
-  }
-  .tab-btn:hover { background: rgba(255,255,255,0.9); color: var(--text); }
-  .tab-btn.active {
-    background: var(--text); color: #fff;
-    border-color: var(--text);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
-  }
-  .tab-icon { font-size: 14px; }
-
-  /* ── SCREEN WRAPPER ── */
+  /* ── SCREENS ── */
   .screen { display: none; }
-  .screen.active { display: block; }
+  .screen.active { display: block; animation: screenIn 0.35s cubic-bezier(0.22,1,0.36,1) both; }
+  @keyframes screenIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
 
-  /* ── SCENE ── */
+  /* ── SCENE WRAP ── */
   .scene-wrap {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 36px 20px 60px;
+    display: flex; justify-content: center; align-items: flex-start;
+    padding: 36px 20px 140px;
     position: relative; z-index: 1;
   }
+  .scene-inner { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .scene { display: flex; align-items: flex-start; position: relative; }
 
   /* ── BRAND HEADER ── */
   .brand-header { text-align: center; margin-bottom: 4px; }
-  .app-name {
-    font-family: 'Instrument Serif', serif;
-    font-size: 32px; font-style: italic; color: var(--text);
-  }
-  .screen-label {
-    font-size: 11px; font-weight: 500; letter-spacing: 0.15em;
-    text-transform: uppercase; color: var(--muted); margin-top: 2px;
-  }
+  .app-name { font-family: 'Instrument Serif', serif; font-size: 32px; font-style: italic; color: var(--text); }
+  .screen-label { font-size: 11px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
 
-  /* ── DEVICE ── */
+  /* ── DEVICE SHELL ── */
   .device {
-    width: 375px; background: var(--bg); border-radius: 48px;
+    width: 375px;
+    height: var(--device-h);
+    background: var(--bg);
+    border-radius: 48px;
     border: 1px solid var(--border-strong);
     box-shadow: 0 0 0 8px #DDDDDB, 0 40px 100px rgba(0,0,0,0.15);
-    overflow: hidden; position: relative;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
   }
+
+  /* Notch + status */
   .notch { width: 120px; height: 34px; background: var(--text); border-radius: 0 0 20px 20px; margin: 0 auto; }
   .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 28px 6px; }
   .status-bar .time { font-size: 15px; font-weight: 600; color: var(--text); }
 
+  /* ── SCROLLABLE APP AREA ── */
+  .app-scroll {
+    position: absolute;
+    top: 80px; /* notch 34 + status ~46 */
+    left: 0; right: 0;
+    bottom: 72px; /* bottom nav height */
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .app-scroll::-webkit-scrollbar { display: none; }
+  .app-scroll { scrollbar-width: none; }
+
   /* ── BOTTOM NAV ── */
   .bottom-nav {
-    position: absolute; bottom: 0; left: 0; right: 0;
+    position: absolute; bottom: 0; left: 0; right: 0; height: 72px;
     background: rgba(242,242,240,0.96); backdrop-filter: blur(20px);
     border-top: 1px solid var(--border);
-    padding: 10px 0 26px; display: flex; justify-content: space-around; align-items: center;
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 8px 0 18px;
   }
-  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px 16px; }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 2px 14px; }
   .nav-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
   .nav-label { font-size: 10px; font-weight: 500; color: var(--subtle); }
   .nav-item.active .nav-label { color: var(--text); font-weight: 600; }
   .nav-dot { width: 4px; height: 4px; background: var(--text); border-radius: 50%; margin-top: 1px; }
 
-  /* ── APP CONTENT ── */
-  .app { padding-bottom: 100px; }
+  /* ── SHARED LAYOUT TOKENS ── */
   .page-header { padding: 18px 24px 0; display: flex; align-items: flex-end; justify-content: space-between; }
   .page-title-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
   .page-title { font-family: 'Instrument Serif', serif; font-size: 28px; font-style: italic; color: var(--text); }
@@ -124,18 +114,30 @@
   }
   .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   .divider { height: 1px; background: var(--border); margin: 14px 24px 0; }
+  .pb { padding-bottom: 24px; }
+
+  /* ── LOGIN ── */
+  .login-body {
+    padding: 40px 28px 28px;
+    display: flex; flex-direction: column;
+    height: 100%;
+    justify-content: center;
+  }
+  .login-logo-wrap { text-align: center; margin-bottom: 36px; }
+  .login-logo { font-family: 'Instrument Serif', serif; font-size: 44px; font-style: italic; color: var(--text); display: block; line-height: 1; margin-bottom: 6px; }
+  .login-sub { font-size: 12.5px; color: var(--muted); }
+  .form-field { margin-bottom: 10px; }
+  .form-label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 5px; letter-spacing: 0.03em; text-transform: uppercase; }
+  .form-input { width: 100%; background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text); outline: none; }
+  .form-input::placeholder { color: var(--subtle); }
+  .btn-primary { width: 100%; background: var(--text); color: #fff; border: none; border-radius: 14px; padding: 15px; font-size: 14px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; margin-top: 14px; }
+  .login-link { text-align: center; margin-top: 16px; font-size: 12.5px; color: var(--muted); }
+  .login-link a { color: var(--text); font-weight: 600; text-decoration: none; }
 
   /* ── SWITCHER ── */
   .header { padding: 20px 24px 0; }
-  .switcher {
-    display: flex; background: var(--white); border-radius: 14px; padding: 3px; gap: 2px;
-    border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  }
-  .switcher-btn {
-    flex: 1; padding: 8px 0; border-radius: 11px; border: none; background: transparent;
-    color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
-  }
+  .switcher { display: flex; background: var(--white); border-radius: 14px; padding: 3px; gap: 2px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .switcher-btn { flex: 1; padding: 8px 0; border-radius: 11px; border: none; background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
   .switcher-btn.active { background: var(--text); color: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
   .pip { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.5; }
 
@@ -148,24 +150,15 @@
   /* ── PROGRESS ── */
   .progress-wrap { padding: 16px 24px 0; display: flex; align-items: center; gap: 10px; }
   .progress-bar { flex: 1; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
-  .progress-fill { height: 100%; width: 45%; background: var(--text); border-radius: 99px; }
+  .progress-fill { height: 100%; background: var(--text); border-radius: 99px; }
   .progress-label { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
   .progress-label strong { color: var(--text); }
 
   /* ── TASK CARD ── */
-  .task-card {
-    background: var(--white); border: 1px solid var(--border); border-radius: 14px;
-    padding: 13px 14px; margin-bottom: 7px;
-    display: flex; align-items: center; gap: 11px; cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
+  .task-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 13px 14px; margin-bottom: 7px; display: flex; align-items: center; gap: 11px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
   .task-card.done { background: transparent; box-shadow: none; border-color: transparent; opacity: 0.5; }
   .task-card.done .task-title { text-decoration: line-through; color: var(--done); }
-  .check-btn {
-    width: 21px; height: 21px; border-radius: 50%;
-    border: 1.5px solid var(--border-strong); background: transparent;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
+  .check-btn { width: 21px; height: 21px; border-radius: 50%; border: 1.5px solid var(--border-strong); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .task-card.done .check-btn { background: var(--text); border-color: var(--text); }
   .check-icon { width: 9px; height: 9px; opacity: 0; }
   .task-card.done .check-icon { opacity: 1; }
@@ -180,11 +173,7 @@
   .task-time { font-size: 11px; color: var(--subtle); }
 
   /* ── QUICK ADD ── */
-  .quick-add {
-    margin: 16px 24px 0; display: flex; align-items: center; gap: 10px;
-    background: var(--white); border: 1.5px dashed var(--border-strong);
-    border-radius: 14px; padding: 13px 14px; cursor: pointer;
-  }
+  .quick-add { margin: 16px 24px 0; display: flex; align-items: center; gap: 10px; background: var(--white); border: 1.5px dashed var(--border-strong); border-radius: 14px; padding: 13px 14px; cursor: pointer; }
   .add-icon { width: 21px; height: 21px; border-radius: 50%; border: 1.5px solid var(--border-strong); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--muted); flex-shrink: 0; }
   .quick-add-text { font-size: 13.5px; color: var(--subtle); }
   .quick-shortcut { margin-left: auto; font-size: 10px; color: var(--subtle); background: var(--surface); padding: 2px 7px; border-radius: 5px; border: 1px solid var(--border); }
@@ -197,36 +186,57 @@
   .streak-text span { font-size: 11px; color: rgba(255,255,255,0.5); }
   .streak-badge { font-family: 'Instrument Serif', serif; font-size: 26px; color: #fff; font-style: italic; }
 
-  /* ── ADD TASK SHEET ── */
-  .bg-screen { padding: 16px 24px; opacity: 0.28; pointer-events: none; }
-  .bg-row { height: 52px; background: var(--white); border-radius: 14px; margin-bottom: 7px; border: 1px solid var(--border); }
+  /* ── ADD TASK — bg blurred rows ── */
+  .bg-screen {
+    position: absolute; inset: 0;
+    padding: 16px 24px;
+    overflow: hidden;
+  }
+  .bg-row { height: 52px; background: var(--white); border-radius: 14px; margin-bottom: 7px; border: 1px solid var(--border); opacity: 0.28; }
   .bg-row.short { width: 65%; }
-  .sheet-overlay { position: absolute; inset: 0; background: rgba(26,26,24,0.18); backdrop-filter: blur(2px); display: flex; align-items: flex-end; }
-  .sheet { width: 100%; background: var(--white); border-radius: 24px 24px 0 0; padding: 0 0 34px; box-shadow: 0 -8px 40px rgba(0,0,0,0.1); }
+
+  /* ── ADD TASK — bottom sheet overlay ── */
+  .sheet-overlay {
+    position: absolute; inset: 0;
+    background: rgba(26,26,24,0.18);
+    backdrop-filter: blur(2px);
+    display: flex; align-items: flex-end;
+  }
+  .sheet {
+    width: 100%;
+    background: var(--white);
+    border-radius: 24px 24px 0 0;
+    padding: 0 0 28px;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.1);
+    max-height: 96%;
+    overflow-y: auto;
+  }
+  .sheet::-webkit-scrollbar { display: none; }
+  .sheet { scrollbar-width: none; }
   .sheet-handle { width: 36px; height: 4px; background: var(--border-strong); border-radius: 99px; margin: 12px auto 0; }
   .sheet-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 0; }
   .sheet-title { font-family: 'Instrument Serif', serif; font-size: 19px; font-style: italic; color: var(--text); }
-  .sheet-close { width: 28px; height: 28px; border-radius: 50%; background: var(--surface); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 16px; }
+  .sheet-close { width: 28px; height: 28px; border-radius: 50%; background: var(--surface); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 16px; font-family: 'DM Sans', sans-serif; }
   .task-input-wrap { padding: 14px 20px 0; }
   .task-input-display { font-family: 'DM Sans', sans-serif; font-size: 17px; font-weight: 500; color: var(--text); line-height: 1.4; }
   .cursor { display: inline-block; width: 2px; height: 18px; background: var(--text); border-radius: 1px; vertical-align: middle; margin-left: 1px; animation: blink 1s step-end infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-  .options-row { padding: 12px 20px 0; display: flex; gap: 8px; flex-wrap: wrap; }
+  .options-row { padding: 12px 20px 0; display: flex; gap: 7px; flex-wrap: wrap; }
   .option-chip { display: flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 99px; border: 1px solid var(--border); background: var(--white); font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; white-space: nowrap; }
   .option-chip.sel-warm { background: var(--tag-urgent-bg); border-color: transparent; color: var(--tag-urgent-text); }
   .option-chip.sel-soft { background: var(--tag-work-bg); border-color: transparent; color: var(--tag-work-text); }
   .chip-icon { font-size: 13px; }
-  .context-row { padding: 12px 20px 0; display: flex; gap: 6px; }
+  .context-row { padding: 10px 20px 0; display: flex; gap: 6px; }
   .context-btn { flex: 1; padding: 9px 0; border-radius: 10px; border: 1px solid var(--border); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
   .context-btn.active { background: var(--text); border-color: var(--text); color: #fff; }
   .ctx-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.6; }
-  .checklist-row { padding: 12px 20px 0; }
+  .checklist-row { padding: 10px 20px 0; }
   .checklist-toggle { display: flex; align-items: center; gap: 10px; padding: 11px 14px; background: var(--surface); border-radius: 12px; cursor: pointer; border: 1px solid var(--border); }
   .toggle-icon { font-size: 15px; }
   .toggle-label { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; }
   .toggle-sub { font-size: 11px; color: var(--muted); }
   .toggle-arrow { color: var(--subtle); font-size: 13px; }
-  .checklist-items { padding: 8px 20px 0; }
+  .checklist-items { padding: 6px 20px 0; }
   .checklist-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
   .checklist-item:last-child { border-bottom: none; }
   .item-check { width: 17px; height: 17px; border-radius: 4px; border: 1.5px solid var(--border-strong); flex-shrink: 0; }
@@ -236,82 +246,172 @@
   .add-checklist-item { display: flex; align-items: center; gap: 10px; padding: 8px 20px 0; cursor: pointer; }
   .add-item-icon { width: 17px; height: 17px; border-radius: 4px; border: 1.5px dashed var(--border-strong); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--subtle); flex-shrink: 0; }
   .add-item-text { font-size: 13px; color: var(--subtle); }
-  .submit-row { padding: 16px 20px 0; display: flex; align-items: center; gap: 10px; }
+  .submit-row { padding: 14px 20px 0; display: flex; align-items: center; gap: 10px; }
   .submit-btn { flex: 1; padding: 13px; background: var(--text); color: #fff; border: none; border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .more-btn { width: 46px; height: 46px; border-radius: 14px; border: 1px solid var(--border); background: var(--white); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 18px; }
 
   /* ── AGENDA ── */
   .month-nav { display: flex; align-items: center; gap: 8px; }
-  .month-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); background: var(--white); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 13px; }
+  .month-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); background: var(--white); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 13px; font-family:'DM Sans',sans-serif; }
   .month-label { font-size: 12px; font-weight: 500; color: var(--text); }
-  .week-strip { padding: 16px 20px 0; display: flex; gap: 4px; }
-  .day-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 4px; border-radius: 12px; cursor: pointer; }
+  .week-strip { padding: 14px 18px 0; display: flex; gap: 3px; }
+  .day-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 7px 3px; border-radius: 12px; cursor: pointer; }
   .day-col.active { background: var(--text); }
-  .day-name { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .day-name { font-size: 9.5px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
   .day-col.active .day-name { color: rgba(255,255,255,0.6); }
-  .day-num { font-size: 16px; font-weight: 600; color: var(--text); }
+  .day-num { font-size: 15px; font-weight: 600; color: var(--text); }
   .day-col.active .day-num { color: #fff; }
   .day-dot { width: 4px; height: 4px; border-radius: 50%; }
   .dot-many { background: var(--text); }
   .dot-few { background: var(--subtle); }
-  .day-col.active .dot-many,.day-col.active .dot-few { background: rgba(255,255,255,0.6); }
-  .timeline { padding: 14px 0 0; }
-  .time-block { display: flex; gap: 0; padding: 0 0 0 24px; margin-bottom: 4px; position: relative; }
-  .time-label { width: 44px; flex-shrink: 0; font-size: 10.5px; color: var(--subtle); font-weight: 500; padding-top: 2px; text-align: right; padding-right: 10px; }
-  .time-line { position: absolute; left: 68px; top: 8px; right: 0; height: 1px; background: var(--border); }
-  .time-events { flex: 1; padding: 0 16px 0 10px; min-height: 20px; }
-  .event { border-radius: 10px; padding: 9px 12px; margin-bottom: 4px; cursor: pointer; border-left: 3px solid transparent; }
+  .dot-empty { background: transparent; }
+  .day-col.active .dot-many, .day-col.active .dot-few { background: rgba(255,255,255,0.6); }
+  .timeline { padding: 12px 0 0; }
+  .time-block { display: flex; padding: 0 0 0 22px; margin-bottom: 3px; position: relative; min-height: 24px; }
+  .time-label { width: 42px; flex-shrink: 0; font-size: 10px; color: var(--subtle); font-weight: 500; padding-top: 2px; text-align: right; padding-right: 9px; }
+  .time-line { position: absolute; left: 64px; top: 8px; right: 14px; height: 1px; background: var(--border); }
+  .time-events { flex: 1; padding: 0 14px 0 9px; min-height: 18px; }
+  .event { border-radius: 10px; padding: 8px 11px; margin-bottom: 3px; border-left: 3px solid transparent; }
   .event.work { background: var(--tag-work-bg); border-left-color: #2A5C4E; }
   .event.personal { background: var(--tag-personal-bg); border-left-color: #5A5A56; }
   .event.urgent { background: var(--tag-urgent-bg); border-left-color: #8C4A1A; }
   .event.dark { background: var(--text); border-left-color: transparent; }
-  .event-title { font-size: 12.5px; font-weight: 600; margin-bottom: 2px; }
+  .event-title { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
   .event.work .event-title { color: var(--tag-work-text); }
   .event.personal .event-title { color: #3A3A36; }
   .event.urgent .event-title { color: var(--tag-urgent-text); }
   .event.dark .event-title { color: #fff; }
-  .event-meta { font-size: 10.5px; display: flex; align-items: center; gap: 6px; }
+  .event-meta { font-size: 10px; display: flex; align-items: center; gap: 5px; }
   .event.work .event-meta { color: rgba(42,92,78,0.7); }
   .event.personal .event-meta { color: var(--muted); }
   .event.urgent .event-meta { color: rgba(140,74,26,0.7); }
   .event.dark .event-meta { color: rgba(255,255,255,0.5); }
-  .event-tag { padding: 1px 6px; border-radius: 99px; font-size: 9.5px; font-weight: 500; }
+  .event-tag { padding: 1px 6px; border-radius: 99px; font-size: 9px; font-weight: 500; }
   .event.work .event-tag { background: rgba(42,92,78,0.12); color: var(--tag-work-text); }
   .event.urgent .event-tag { background: rgba(140,74,26,0.12); color: var(--tag-urgent-text); }
   .event.dark .event-tag { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); }
-  .allday-row { display: flex; padding: 0 16px 0 68px; margin-bottom: 10px; }
-  .allday-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 500; color: var(--muted); }
-  .free-slot { display: flex; padding: 0 0 0 68px; margin: 2px 16px 2px 0; }
-  .free-label { font-size: 10px; color: var(--subtle); font-style: italic; }
-  .now-line { display: flex; align-items: center; padding: 0 16px 0 24px; margin: 0 0 4px; }
-  .now-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text); flex-shrink: 0; margin-left: 36px; margin-right: 4px; }
+  .allday-row { display: flex; padding: 0 14px 0 64px; margin-bottom: 8px; }
+  .allday-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 9px; font-size: 10.5px; font-weight: 500; color: var(--muted); }
+  .free-slot { padding: 0 0 0 64px; margin: 1px 14px; }
+  .free-label { font-size: 9.5px; color: var(--subtle); font-style: italic; }
+  .now-line { display: flex; align-items: center; padding: 0 14px 0 22px; margin: 2px 0 3px; }
+  .now-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text); flex-shrink: 0; margin-left: 34px; margin-right: 4px; }
   .now-rule { flex: 1; height: 1.5px; background: var(--text); }
+
+  /* ── PROJECTS ── */
+  .proj-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 15px 17px; margin-bottom: 9px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .proj-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+  .proj-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
+  .proj-stats { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+  .proj-count { font-size: 11px; color: var(--muted); }
+  .proj-pct { font-size: 11px; font-weight: 600; color: var(--text); }
+  .bar-bg { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 3px; background: var(--text); border-radius: 99px; }
+  .new-proj-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--white); border: 1.5px dashed var(--border-strong); border-radius: 14px; padding: 13px; cursor: pointer; font-size: 13px; color: var(--subtle); font-family: 'DM Sans', sans-serif; margin-top: 2px; }
+
+  /* ── PROFILE ── */
+  .profile-top { padding: 26px 24px 0; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
+  .avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--text); display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; font-weight: 600; margin-bottom: 2px; }
+  .profile-name { font-family: 'Instrument Serif', serif; font-size: 22px; font-style: italic; color: var(--text); }
+  .profile-email { font-size: 12px; color: var(--muted); }
+  .profile-plan { background: var(--surface); border: 1px solid var(--border); border-radius: 99px; padding: 3px 12px; font-size: 10.5px; font-weight: 600; color: var(--muted); margin-top: 2px; }
+  .stats-row { display: flex; gap: 7px; padding: 14px 24px 0; }
+  .stat-box { flex: 1; background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 12px 8px; text-align: center; }
+  .stat-num { font-family: 'Instrument Serif', serif; font-size: 26px; font-style: italic; color: var(--text); line-height: 1.1; }
+  .stat-label { font-size: 9.5px; color: var(--muted); margin-top: 2px; }
+  .settings-list { margin: 14px 24px 0; background: var(--white); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-label { font-size: 13px; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 10px; }
+  .settings-label.danger { color: #C0392B; }
+  .settings-label .s-icon { font-size: 15px; }
+  .settings-arrow { color: var(--subtle); font-size: 16px; }
 
   /* ── ANNOTATIONS ── */
   .annotations { position: absolute; top: 0; left: 400px; width: 240px; }
-  .annotation { display: flex; align-items: flex-start; opacity: 0; animation: fadeIn 0.4s ease forwards; }
+  .annotation { display: flex; align-items: flex-start; opacity: 0; animation: fadeNote 0.4s ease forwards; }
   .annotation-line { width: 36px; height: 1px; background: var(--border-strong); margin-top: 9px; flex-shrink: 0; }
   .annotation-content { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 7px 11px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
   .annotation-title { font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 1px; }
   .annotation-desc { font-size: 10.5px; color: var(--muted); line-height: 1.5; }
-  @keyframes fadeIn { from { opacity:0; transform:translateX(-6px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes fadeNote { from { opacity:0; transform:translateX(-6px); } to { opacity:1; transform:translateX(0); } }
+
+  /* ── FIXED NAV BAR ── */
+  .nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    padding: 18px 32px 28px;
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    background: linear-gradient(to top, rgba(229,229,227,1) 60%, rgba(229,229,227,0));
+  }
+  .nav-prev, .nav-next {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 24px; border-radius: 99px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s ease; border: none; letter-spacing: 0.01em;
+  }
+  .nav-prev { background: rgba(255,255,255,0.7); color: var(--muted); border: 1px solid var(--border-strong); backdrop-filter: blur(8px); }
+  .nav-prev:hover { background: rgba(255,255,255,0.95); color: var(--text); }
+  .nav-next { background: var(--text); color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  .nav-next:hover { opacity: 0.88; transform: translateY(-1px); }
+  .nav-next:disabled, .nav-prev:disabled { opacity: 0.25; pointer-events: none; }
+  .nav-dots { display: flex; align-items: center; gap: 6px; }
+  .nav-dot-item { width: 6px; height: 6px; border-radius: 50%; background: var(--subtle); transition: all 0.2s; cursor: pointer; }
+  .nav-dot-item.active { width: 20px; border-radius: 99px; background: var(--text); }
+
+  /* SVG icons helper */
+  .svg-status { display:flex; align-items:center; gap:4px; }
 </style>
 </head>
 <body>
 
-<!-- TAB NAV -->
-<div class="tab-nav">
-  <button class="tab-btn active" onclick="showTab('hoje')"><span class="tab-icon">🏠</span> Hoje</button>
-  <button class="tab-btn" onclick="showTab('adicionar')"><span class="tab-icon">➕</span> Adicionar Tarefa</button>
-  <button class="tab-btn" onclick="showTab('agenda')"><span class="tab-icon">📅</span> Agenda</button>
+<!-- ══════════════ TELA 1 — LOGIN ══════════════ -->
+<div id="screen-0" class="screen active">
+  <div class="scene-wrap">
+    <div class="scene-inner">
+      <div class="brand-header">
+        <div class="app-name">daily flow</div>
+        <div class="screen-label">Tela de Entrada — Login</div>
+      </div>
+      <div class="scene">
+        <div class="device">
+          <div class="notch"></div>
+          <div class="status-bar">
+            <span class="time">09:41</span>
+            <svg width="40" height="10" viewBox="0 0 40 10"><rect x="0" y="2" width="5" height="8" rx="1" fill="#C4C4C0"/><rect x="8" y="1" width="5" height="9" rx="1" fill="#8A8A86"/><rect x="16" y="0" width="5" height="10" rx="1" fill="#3A3A38"/><rect x="25" y="2" width="15" height="7" rx="2" fill="none" stroke="#C4C4C0" stroke-width="1"/><rect x="26" y="3.5" width="10" height="4" rx="1" fill="#3A3A38"/></svg>
+          </div>
+          <!-- Login fills the whole device, no app-scroll needed -->
+          <div class="login-body">
+            <div class="login-logo-wrap">
+              <span class="login-logo">daily flow</span>
+              <span class="login-sub">Seu dia, organizado com calma.</span>
+            </div>
+            <div class="form-field">
+              <label class="form-label">E-mail</label>
+              <input class="form-input" type="email" placeholder="voce@email.com" value="ana@email.com">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Senha</label>
+              <input class="form-input" type="password" placeholder="••••••••" value="••••••••">
+            </div>
+            <button class="btn-primary">Entrar</button>
+            <div class="login-link" style="margin-top:14px">Não tem conta? <a href="#">Criar conta</a></div>
+          </div>
+        </div>
+        <div class="annotations">
+          <div class="annotation" style="margin-top:62px;animation-delay:0.1s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Logotipo em serif itálico</div><div class="annotation-desc">Tom elegante e acolhedor — não clínico nem técnico</div></div></div>
+          <div class="annotation" style="margin-top:80px;animation-delay:0.2s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Campos sem exagero</div><div class="annotation-desc">Borda suave, fundo branco puro — foco no conteúdo</div></div></div>
+          <div class="annotation" style="margin-top:56px;animation-delay:0.3s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">CTA preto total</div><div class="annotation-desc">Único elemento escuro — atração visual imediata</div></div></div>
+          <div class="annotation" style="margin-top:52px;animation-delay:0.4s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Link discreto</div><div class="annotation-desc">Criar conta em peso leve — hierarquia respeitada</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     TELA 1 — HOJE
-════════════════════════════════════════ -->
-<div id="screen-hoje" class="screen active">
+<!-- ══════════════ TELA 2 — HOJE ══════════════ -->
+<div id="screen-1" class="screen">
   <div class="scene-wrap">
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-right:0">
+    <div class="scene-inner">
       <div class="brand-header">
         <div class="app-name">daily flow</div>
         <div class="screen-label">Tela Principal — Hoje</div>
@@ -323,7 +423,7 @@
             <span class="time">09:41</span>
             <svg width="40" height="10" viewBox="0 0 40 10"><rect x="0" y="2" width="5" height="8" rx="1" fill="#C4C4C0"/><rect x="8" y="1" width="5" height="9" rx="1" fill="#8A8A86"/><rect x="16" y="0" width="5" height="10" rx="1" fill="#3A3A38"/><rect x="25" y="2" width="15" height="7" rx="2" fill="none" stroke="#C4C4C0" stroke-width="1"/><rect x="26" y="3.5" width="10" height="4" rx="1" fill="#3A3A38"/></svg>
           </div>
-          <div class="app">
+          <div class="app-scroll">
             <div class="header">
               <div class="switcher">
                 <button class="switcher-btn active"><div class="pip"></div> Pessoal</button>
@@ -336,7 +436,7 @@
               <div class="today-title"><em>Bom dia,</em> <span>Ana 👋</span></div>
             </div>
             <div class="progress-wrap">
-              <div class="progress-bar"><div class="progress-fill"></div></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:45%"></div></div>
               <div class="progress-label"><strong>5</strong> de 11 tarefas</div>
             </div>
             <div class="section">
@@ -351,7 +451,7 @@
               <div class="task-card done"><button class="check-btn"><svg class="check-icon" viewBox="0 0 9 9"><path d="M1.5 4.5l2 2L7.5 2"/></svg></button><div class="task-body"><div class="task-title">Enviar relatório semanal</div><div class="task-meta"><span class="task-time">09:00</span></div></div></div>
             </div>
             <div class="quick-add"><div class="add-icon">+</div><div class="quick-add-text">Adicionar tarefa...</div><div class="quick-shortcut">⌘K</div></div>
-            <div class="streak-banner"><div class="streak-emoji">🔥</div><div class="streak-text"><strong>Sequência ativa!</strong><span>7 dias completando tarefas</span></div><div class="streak-badge">7d</div></div>
+            <div class="streak-banner" style="margin-bottom:0"><div class="streak-emoji">🔥</div><div class="streak-text"><strong>Sequência ativa!</strong><span>7 dias completando tarefas</span></div><div class="streak-badge">7d</div></div>
           </div>
           <div class="bottom-nav">
             <div class="nav-item active"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10L10 3L17 10V17H13V13H7V17H3V10Z" stroke="#1A1A18" stroke-width="1.5" stroke-linejoin="round"/></svg></div><div class="nav-label">Hoje</div><div class="nav-dot"></div></div>
@@ -360,42 +460,55 @@
             <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="8" r="3.5" stroke="#C4C4C0" stroke-width="1.5"/><path d="M4 17C4 14.2 6.7 12 10 12C13.3 12 16 14.2 16 17" stroke="#C4C4C0" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="nav-label">Perfil</div></div>
           </div>
         </div>
-        <!-- annotations hoje -->
         <div class="annotations">
-          <div class="annotation" style="margin-top:92px;animation-delay:0.1s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Switcher de contexto</div><div class="annotation-desc">Alterna Pessoal / Trabalho / Tudo com 1 toque. Preto = ativo</div></div></div>
-          <div class="annotation" style="margin-top:62px;animation-delay:0.2s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Saudação personalizada</div><div class="annotation-desc">Serif em itálico — tom acolhedor, não clínico</div></div></div>
+          <div class="annotation" style="margin-top:92px;animation-delay:0.1s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Switcher de contexto</div><div class="annotation-desc">Alterna Pessoal / Trabalho / Tudo com 1 toque</div></div></div>
+          <div class="annotation" style="margin-top:62px;animation-delay:0.2s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Saudação personalizada</div><div class="annotation-desc">Serif itálico — tom acolhedor, não clínico</div></div></div>
           <div class="annotation" style="margin-top:44px;animation-delay:0.3s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Barra de progresso</div><div class="annotation-desc">Linha fina discreta — motiva sem pressionar</div></div></div>
-          <div class="annotation" style="margin-top:66px;animation-delay:0.4s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Cards brancos elevados</div><div class="annotation-desc">Hierarquia natural sobre fundo cinza</div></div></div>
-          <div class="annotation" style="margin-top:52px;animation-delay:0.5s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Tags por contexto</div><div class="annotation-desc">Verde = trabalho · bege = pessoal · laranja = urgente</div></div></div>
+          <div class="annotation" style="margin-top:62px;animation-delay:0.4s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Cards brancos elevados</div><div class="annotation-desc">Hierarquia natural sobre fundo cinza quente</div></div></div>
+          <div class="annotation" style="margin-top:52px;animation-delay:0.5s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Tags por contexto</div><div class="annotation-desc">Verde = trabalho · cinza = pessoal · laranja = urgente</div></div></div>
           <div class="annotation" style="margin-top:52px;animation-delay:0.6s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Concluídas suaves</div><div class="annotation-desc">Sem card, só riscado — celebram sem poluir</div></div></div>
-          <div class="annotation" style="margin-top:110px;animation-delay:0.7s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Streak invertido</div><div class="annotation-desc">Único bloco preto — destaca a conquista do dia</div></div></div>
+          <div class="annotation" style="margin-top:100px;animation-delay:0.7s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Streak invertido</div><div class="annotation-desc">Único bloco preto — destaca a conquista do dia</div></div></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     TELA 2 — ADICIONAR TAREFA
-════════════════════════════════════════ -->
-<div id="screen-adicionar" class="screen">
+<!-- ══════════════ TELA 3 — ADICIONAR TAREFA ══════════════ -->
+<div id="screen-2" class="screen">
   <div class="scene-wrap">
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+    <div class="scene-inner">
       <div class="brand-header">
         <div class="app-name">daily flow</div>
-        <div class="screen-label">Adicionar Tarefa</div>
+        <div class="screen-label">Adicionar Tarefa — Bottom Sheet</div>
       </div>
       <div class="scene">
         <div class="device">
           <div class="notch"></div>
-          <div class="status-bar"><span class="time">09:41</span><svg width="40" height="10" viewBox="0 0 40 10"><rect x="0" y="2" width="5" height="8" rx="1" fill="#C4C4C0"/><rect x="8" y="1" width="5" height="9" rx="1" fill="#8A8A86"/><rect x="16" y="0" width="5" height="10" rx="1" fill="#3A3A38"/><rect x="25" y="2" width="15" height="7" rx="2" fill="none" stroke="#C4C4C0" stroke-width="1"/><rect x="26" y="3.5" width="10" height="4" rx="1" fill="#3A3A38"/></svg></div>
-          <div class="bg-screen"><div class="bg-row"></div><div class="bg-row short"></div><div class="bg-row"></div><div class="bg-row short"></div><div class="bg-row"></div></div>
+          <div class="status-bar">
+            <span class="time">09:41</span>
+            <svg width="40" height="10" viewBox="0 0 40 10"><rect x="0" y="2" width="5" height="8" rx="1" fill="#C4C4C0"/><rect x="8" y="1" width="5" height="9" rx="1" fill="#8A8A86"/><rect x="16" y="0" width="5" height="10" rx="1" fill="#3A3A38"/><rect x="25" y="2" width="15" height="7" rx="2" fill="none" stroke="#C4C4C0" stroke-width="1"/><rect x="26" y="3.5" width="10" height="4" rx="1" fill="#3A3A38"/></svg>
+          </div>
+          <!-- bg blurred content -->
+          <div class="bg-screen">
+            <div class="bg-row"></div>
+            <div class="bg-row short"></div>
+            <div class="bg-row"></div>
+            <div class="bg-row short"></div>
+            <div class="bg-row"></div>
+          </div>
+          <!-- sheet overlay anchored to device bottom -->
           <div class="sheet-overlay">
             <div class="sheet">
               <div class="sheet-handle"></div>
-              <div class="sheet-header"><div class="sheet-title">Nova tarefa</div><button class="sheet-close">×</button></div>
-              <div class="task-input-wrap"><div class="task-input-display">Revisar apresentação<span class="cursor"></span></div></div>
-              <div class="divider" style="margin-top:14px"></div>
+              <div class="sheet-header">
+                <div class="sheet-title">Nova tarefa</div>
+                <button class="sheet-close">×</button>
+              </div>
+              <div class="task-input-wrap">
+                <div class="task-input-display">Revisar apresentação<span class="cursor"></span></div>
+              </div>
+              <div class="divider" style="margin-top:12px"></div>
               <div class="options-row">
                 <div class="option-chip sel-warm"><span class="chip-icon">⏰</span> Hoje, 10:00</div>
                 <div class="option-chip sel-soft"><span class="chip-icon">🏷</span> Trabalho</div>
@@ -406,38 +519,48 @@
                 <button class="context-btn"><div class="ctx-dot"></div> Pessoal</button>
                 <button class="context-btn active"><div class="ctx-dot"></div> Trabalho</button>
               </div>
-              <div class="checklist-row"><div class="checklist-toggle"><span class="toggle-icon">☑️</span><span class="toggle-label">Checklist</span><span class="toggle-sub">3 itens</span><span class="toggle-arrow">›</span></div></div>
+              <div class="checklist-row">
+                <div class="checklist-toggle">
+                  <span class="toggle-icon">☑️</span>
+                  <span class="toggle-label">Checklist</span>
+                  <span class="toggle-sub">3 itens</span>
+                  <span class="toggle-arrow">›</span>
+                </div>
+              </div>
               <div class="checklist-items">
                 <div class="checklist-item"><div class="item-check"></div><div class="item-text">Atualizar slides de dados</div><div class="item-drag">⋮⋮</div></div>
                 <div class="checklist-item"><div class="item-check"></div><div class="item-text">Revisar com o gerente</div><div class="item-drag">⋮⋮</div></div>
                 <div class="checklist-item"><div class="item-check"></div><div class="item-text placeholder">Adicionar item...</div><div class="item-drag">⋮⋮</div></div>
               </div>
-              <div class="add-checklist-item"><div class="add-item-icon">+</div><div class="add-item-text">Novo item de checklist</div></div>
-              <div class="submit-row"><button class="submit-btn">✓ Salvar tarefa</button><button class="more-btn">···</button></div>
+              <div class="add-checklist-item">
+                <div class="add-item-icon">+</div>
+                <div class="add-item-text">Novo item de checklist</div>
+              </div>
+              <div class="submit-row">
+                <button class="submit-btn">✓ Salvar tarefa</button>
+                <button class="more-btn">···</button>
+              </div>
             </div>
           </div>
         </div>
-        <!-- annotations add -->
         <div class="annotations">
-          <div class="annotation" style="margin-top:240px;animation-delay:0.1s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Bottom sheet</div><div class="annotation-desc">Sobe sobre a lista — contexto mantido, sem troca de tela</div></div></div>
-          <div class="annotation" style="margin-top:48px;animation-delay:0.2s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Campo limpo</div><div class="annotation-desc">Sem borda, sem label — foco total no que está digitando</div></div></div>
-          <div class="annotation" style="margin-top:52px;animation-delay:0.3s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Chips rápidos</div><div class="annotation-desc">Data, categoria, lembrete e anexo em um gesto horizontal</div></div></div>
-          <div class="annotation" style="margin-top:48px;animation-delay:0.4s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Switcher de contexto</div><div class="annotation-desc">Pessoal / Trabalho — preto = selecionado</div></div></div>
-          <div class="annotation" style="margin-top:58px;animation-delay:0.5s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Checklist nativo</div><div class="annotation-desc">Expansível dentro da tarefa — sem nova tela</div></div></div>
-          <div class="annotation" style="margin-top:68px;animation-delay:0.6s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Itens arrastáveis</div><div class="annotation-desc">Ícone de drag à direita para reordenar</div></div></div>
-          <div class="annotation" style="margin-top:42px;animation-delay:0.7s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">CTA + opções avançadas</div><div class="annotation-desc">"···" expande detalhes sem poluir o fluxo principal</div></div></div>
+          <div class="annotation" style="margin-top:238px;animation-delay:0.1s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Bottom sheet</div><div class="annotation-desc">Sobe sobre a lista — contexto mantido, sem troca de tela</div></div></div>
+          <div class="annotation" style="margin-top:44px;animation-delay:0.2s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Campo limpo</div><div class="annotation-desc">Sem borda, sem label — foco total no que está digitando</div></div></div>
+          <div class="annotation" style="margin-top:48px;animation-delay:0.3s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Chips rápidos</div><div class="annotation-desc">Data, categoria, lembrete e anexo num gesto horizontal</div></div></div>
+          <div class="annotation" style="margin-top:44px;animation-delay:0.4s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Switcher de contexto</div><div class="annotation-desc">Pessoal / Trabalho — preto = selecionado</div></div></div>
+          <div class="annotation" style="margin-top:52px;animation-delay:0.5s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Checklist nativo</div><div class="annotation-desc">Expansível dentro da tarefa — sem nova tela</div></div></div>
+          <div class="annotation" style="margin-top:62px;animation-delay:0.6s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Itens arrastáveis</div><div class="annotation-desc">Ícone de drag à direita para reordenar</div></div></div>
+          <div class="annotation" style="margin-top:48px;animation-delay:0.7s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">CTA + opções avançadas</div><div class="annotation-desc">«···» expande detalhes sem poluir o fluxo principal</div></div></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     TELA 3 — AGENDA
-════════════════════════════════════════ -->
-<div id="screen-agenda" class="screen">
+<!-- ══════════════ TELA 4 — AGENDA ══════════════ -->
+<div id="screen-3" class="screen">
   <div class="scene-wrap">
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+    <div class="scene-inner">
       <div class="brand-header">
         <div class="app-name">daily flow</div>
         <div class="screen-label">Agenda Semanal</div>
@@ -445,11 +568,21 @@
       <div class="scene">
         <div class="device">
           <div class="notch"></div>
-          <div class="status-bar"><span class="time">09:41</span><svg width="40" height="10" viewBox="0 0 40 10"><rect x="0" y="2" width="5" height="8" rx="1" fill="#C4C4C0"/><rect x="8" y="1" width="5" height="9" rx="1" fill="#8A8A86"/><rect x="16" y="0" width="5" height="10" rx="1" fill="#3A3A38"/><rect x="25" y="2" width="15" height="7" rx="2" fill="none" stroke="#C4C4C0" stroke-width="1"/><rect x="26" y="3.5" width="10" height="4" rx="1" fill="#3A3A38"/></svg></div>
-          <div class="app">
+          <div class="status-bar">
+            <span class="time">09:41</span>
+            <svg width="40" height="10" viewBox="0 0 40 10"><rect x="0" y="2" width="5" height="8" rx="1" fill="#C4C4C0"/><rect x="8" y="1" width="5" height="9" rx="1" fill="#8A8A86"/><rect x="16" y="0" width="5" height="10" rx="1" fill="#3A3A38"/><rect x="25" y="2" width="15" height="7" rx="2" fill="none" stroke="#C4C4C0" stroke-width="1"/><rect x="26" y="3.5" width="10" height="4" rx="1" fill="#3A3A38"/></svg>
+          </div>
+          <div class="app-scroll">
             <div class="page-header">
-              <div><div class="page-title-label">Março 2026</div><div class="page-title">Esta semana</div></div>
-              <div class="month-nav"><button class="month-btn">‹</button><span class="month-label">Mar</span><button class="month-btn">›</button></div>
+              <div>
+                <div class="page-title-label">Março 2026</div>
+                <div class="page-title">Esta semana</div>
+              </div>
+              <div class="month-nav">
+                <button class="month-btn">‹</button>
+                <span class="month-label">Mar</span>
+                <button class="month-btn">›</button>
+              </div>
             </div>
             <div class="week-strip">
               <div class="day-col"><div class="day-name">Seg</div><div class="day-num">2</div><div class="day-dot dot-few"></div></div>
@@ -458,7 +591,7 @@
               <div class="day-col"><div class="day-name">Qui</div><div class="day-num">5</div><div class="day-dot dot-many"></div></div>
               <div class="day-col active"><div class="day-name">Sex</div><div class="day-num">6</div><div class="day-dot dot-many"></div></div>
               <div class="day-col"><div class="day-name">Sáb</div><div class="day-num">7</div><div class="day-dot dot-few"></div></div>
-              <div class="day-col"><div class="day-name">Dom</div><div class="day-num">8</div><div class="day-dot"></div></div>
+              <div class="day-col"><div class="day-name">Dom</div><div class="day-num">8</div><div class="day-dot dot-empty"></div></div>
             </div>
             <div class="divider"></div>
             <div class="timeline">
@@ -479,34 +612,193 @@
             <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="8" r="3.5" stroke="#C4C4C0" stroke-width="1.5"/><path d="M4 17C4 14.2 6.7 12 10 12C13.3 12 16 14.2 16 17" stroke="#C4C4C0" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="nav-label">Perfil</div></div>
           </div>
         </div>
-        <!-- annotations agenda -->
         <div class="annotations">
-          <div class="annotation" style="margin-top:92px;animation-delay:0.1s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Strip semanal</div><div class="annotation-desc">7 dias visíveis, pontinhos mostram carga de cada dia</div></div></div>
-          <div class="annotation" style="margin-top:56px;animation-delay:0.2s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Dia ativo em preto</div><div class="annotation-desc">Identificação imediata de onde você está na semana</div></div></div>
-          <div class="annotation" style="margin-top:90px;animation-delay:0.3s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Prazo all-day</div><div class="annotation-desc">Deadlines fixados no topo — nunca se perdem na timeline</div></div></div>
-          <div class="annotation" style="margin-top:56px;animation-delay:0.4s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Linha do agora</div><div class="annotation-desc">Ponto + linha preta — localização imediata no tempo</div></div></div>
+          <div class="annotation" style="margin-top:90px;animation-delay:0.1s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Strip semanal</div><div class="annotation-desc">7 dias visíveis, pontinhos mostram carga de cada dia</div></div></div>
+          <div class="annotation" style="margin-top:54px;animation-delay:0.2s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Dia ativo em preto</div><div class="annotation-desc">Identificação imediata de onde você está na semana</div></div></div>
+          <div class="annotation" style="margin-top:86px;animation-delay:0.3s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Prazo all-day</div><div class="annotation-desc">Deadlines fixados no topo — nunca se perdem na timeline</div></div></div>
+          <div class="annotation" style="margin-top:52px;animation-delay:0.4s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Linha do agora</div><div class="annotation-desc">Ponto + linha preta — localização imediata no tempo</div></div></div>
           <div class="annotation" style="margin-top:56px;animation-delay:0.5s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Cores consistentes</div><div class="annotation-desc">Mesmas tags da tela Hoje — linguagem visual unificada</div></div></div>
-          <div class="annotation" style="margin-top:52px;animation-delay:0.6s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Slots livres visíveis</div><div class="annotation-desc">"disponível" em itálico — ajuda a planejar o dia</div></div></div>
-          <div class="annotation" style="margin-top:56px;animation-delay:0.7s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Evento destaque em preto</div><div class="annotation-desc">Revisão semanal em bloco escuro — prioridade visual clara</div></div></div>
+          <div class="annotation" style="margin-top:50px;animation-delay:0.6s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Slots livres visíveis</div><div class="annotation-desc">«disponível» em itálico — ajuda a planejar o dia</div></div></div>
+          <div class="annotation" style="margin-top:52px;animation-delay:0.7s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Evento destaque em preto</div><div class="annotation-desc">Revisão semanal em bloco escuro — prioridade visual clara</div></div></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- ══════════════ TELA 5 — PROJETOS ══════════════ -->
+<div id="screen-4" class="screen">
+  <div class="scene-wrap">
+    <div class="scene-inner">
+      <div class="brand-header">
+        <div class="app-name">daily flow</div>
+        <div class="screen-label">Projetos</div>
+      </div>
+      <div class="scene">
+        <div class="device">
+          <div class="notch"></div>
+          <div class="status-bar">
+            <span class="time">09:41</span>
+            <svg width="40" height="10" viewBox="0 0 40 10"><rect x="0" y="2" width="5" height="8" rx="1" fill="#C4C4C0"/><rect x="8" y="1" width="5" height="9" rx="1" fill="#8A8A86"/><rect x="16" y="0" width="5" height="10" rx="1" fill="#3A3A38"/><rect x="25" y="2" width="15" height="7" rx="2" fill="none" stroke="#C4C4C0" stroke-width="1"/><rect x="26" y="3.5" width="10" height="4" rx="1" fill="#3A3A38"/></svg>
+          </div>
+          <div class="app-scroll">
+            <div class="page-header">
+              <div>
+                <div class="page-title-label">Organização</div>
+                <div class="page-title">Projetos</div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-title">Ativos</div>
+              <div class="proj-card">
+                <div class="proj-header"><span class="proj-name">Proposta Q2</span><span class="task-tag tag-work">Trabalho</span></div>
+                <div class="proj-stats"><span class="proj-count">1 de 3 tarefas concluídas</span><span class="proj-pct">33%</span></div>
+                <div class="bar-bg"><div class="bar-fill" style="width:33%"></div></div>
+              </div>
+              <div class="proj-card">
+                <div class="proj-header"><span class="proj-name">Rotina pessoal</span><span class="task-tag tag-personal">Pessoal</span></div>
+                <div class="proj-stats"><span class="proj-count">1 de 1 tarefas concluídas</span><span class="proj-pct">100%</span></div>
+                <div class="bar-bg"><div class="bar-fill" style="width:100%"></div></div>
+              </div>
+              <div class="proj-card">
+                <div class="proj-header"><span class="proj-name">Stand-ups semanais</span><span class="task-tag tag-work">Trabalho</span></div>
+                <div class="proj-stats"><span class="proj-count">0 de 2 tarefas concluídas</span><span class="proj-pct">0%</span></div>
+                <div class="bar-bg"><div class="bar-fill" style="width:0%"></div></div>
+              </div>
+              <div class="proj-card">
+                <div class="proj-header"><span class="proj-name">Desenvolvimento pessoal</span><span class="task-tag tag-personal">Pessoal</span></div>
+                <div class="proj-stats"><span class="proj-count">3 de 5 tarefas concluídas</span><span class="proj-pct">60%</span></div>
+                <div class="bar-bg"><div class="bar-fill" style="width:60%"></div></div>
+              </div>
+              <div class="new-proj-btn">+ Novo projeto</div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10L10 3L17 10V17H13V13H7V17H3V10Z" stroke="#C4C4C0" stroke-width="1.5" stroke-linejoin="round"/></svg></div><div class="nav-label">Hoje</div></div>
+            <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="2" stroke="#C4C4C0" stroke-width="1.5"/><path d="M7 2V5M13 2V5M3 8H17" stroke="#C4C4C0" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="nav-label">Agenda</div></div>
+            <div class="nav-item active"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1.5" stroke="#1A1A18" stroke-width="1.5"/><rect x="11" y="3" width="6" height="6" rx="1.5" stroke="#1A1A18" stroke-width="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.5" stroke="#1A1A18" stroke-width="1.5"/><rect x="11" y="11" width="6" height="6" rx="1.5" stroke="#1A1A18" stroke-width="1.5"/></svg></div><div class="nav-label">Projetos</div><div class="nav-dot"></div></div>
+            <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="8" r="3.5" stroke="#C4C4C0" stroke-width="1.5"/><path d="M4 17C4 14.2 6.7 12 10 12C13.3 12 16 14.2 16 17" stroke="#C4C4C0" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="nav-label">Perfil</div></div>
+          </div>
+        </div>
+        <div class="annotations">
+          <div class="annotation" style="margin-top:92px;animation-delay:0.1s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Cards por projeto</div><div class="annotation-desc">Cada projeto tem nome, contexto e progresso visível</div></div></div>
+          <div class="annotation" style="margin-top:68px;animation-delay:0.2s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Tags consistentes</div><div class="annotation-desc">Verde e cinza — mesma linguagem de toda a interface</div></div></div>
+          <div class="annotation" style="margin-top:68px;animation-delay:0.3s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Barra de progresso</div><div class="annotation-desc">Linha de 3px discreta — avança do branco ao preto</div></div></div>
+          <div class="annotation" style="margin-top:68px;animation-delay:0.4s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">% + contagem</div><div class="annotation-desc">Dupla informação — rápida leitura de status</div></div></div>
+          <div class="annotation" style="margin-top:68px;animation-delay:0.5s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Novo projeto tracejado</div><div class="annotation-desc">Borda dashed — convite sem peso visual</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TELA 6 — PERFIL ══════════════ -->
+<div id="screen-5" class="screen">
+  <div class="scene-wrap">
+    <div class="scene-inner">
+      <div class="brand-header">
+        <div class="app-name">daily flow</div>
+        <div class="screen-label">Perfil &amp; Configurações</div>
+      </div>
+      <div class="scene">
+        <div class="device">
+          <div class="notch"></div>
+          <div class="status-bar">
+            <span class="time">09:41</span>
+            <svg width="40" height="10" viewBox="0 0 40 10"><rect x="0" y="2" width="5" height="8" rx="1" fill="#C4C4C0"/><rect x="8" y="1" width="5" height="9" rx="1" fill="#8A8A86"/><rect x="16" y="0" width="5" height="10" rx="1" fill="#3A3A38"/><rect x="25" y="2" width="15" height="7" rx="2" fill="none" stroke="#C4C4C0" stroke-width="1"/><rect x="26" y="3.5" width="10" height="4" rx="1" fill="#3A3A38"/></svg>
+          </div>
+          <div class="app-scroll">
+            <div class="profile-top">
+              <div class="avatar">A</div>
+              <div class="profile-name">Ana Silva</div>
+              <div class="profile-email">ana@email.com</div>
+              <div class="profile-plan">Plano Free</div>
+            </div>
+            <div class="stats-row">
+              <div class="stat-box"><div class="stat-num">5</div><div class="stat-label">Concluídas hoje</div></div>
+              <div class="stat-box"><div class="stat-num">7</div><div class="stat-label">Dias seguidos</div></div>
+              <div class="stat-box"><div class="stat-num">11</div><div class="stat-label">Total tarefas</div></div>
+            </div>
+            <div class="settings-list">
+              <div class="settings-row"><span class="settings-label"><span class="s-icon">🔔</span> Notificações</span><span class="settings-arrow">›</span></div>
+              <div class="settings-row"><span class="settings-label"><span class="s-icon">🎨</span> Aparência</span><span class="settings-arrow">›</span></div>
+              <div class="settings-row"><span class="settings-label"><span class="s-icon">⭐</span> Plano Pro</span><span class="settings-arrow">›</span></div>
+              <div class="settings-row"><span class="settings-label"><span class="s-icon">📅</span> Integrar calendário</span><span class="settings-arrow">›</span></div>
+              <div class="settings-row"><span class="settings-label"><span class="s-icon">📤</span> Exportar dados</span><span class="settings-arrow">›</span></div>
+              <div class="settings-row"><span class="settings-label danger"><span class="s-icon">🚪</span> Sair</span><span class="settings-arrow" style="color:#C0392B">›</span></div>
+            </div>
+            <div style="text-align:center;padding:20px 0 8px">
+              <div style="font-family:'Instrument Serif',serif;font-size:14px;font-style:italic;color:var(--subtle)">daily flow</div>
+              <div style="font-size:10.5px;color:var(--subtle);margin-top:3px">v1.0.0</div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10L10 3L17 10V17H13V13H7V17H3V10Z" stroke="#C4C4C0" stroke-width="1.5" stroke-linejoin="round"/></svg></div><div class="nav-label">Hoje</div></div>
+            <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="2" stroke="#C4C4C0" stroke-width="1.5"/><path d="M7 2V5M13 2V5M3 8H17" stroke="#C4C4C0" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="nav-label">Agenda</div></div>
+            <div class="nav-item"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1.5" stroke="#C4C4C0" stroke-width="1.5"/><rect x="11" y="3" width="6" height="6" rx="1.5" stroke="#C4C4C0" stroke-width="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.5" stroke="#C4C4C0" stroke-width="1.5"/><rect x="11" y="11" width="6" height="6" rx="1.5" stroke="#C4C4C0" stroke-width="1.5"/></svg></div><div class="nav-label">Projetos</div></div>
+            <div class="nav-item active"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="8" r="3.5" stroke="#1A1A18" stroke-width="1.5"/><path d="M4 17C4 14.2 6.7 12 10 12C13.3 12 16 14.2 16 17" stroke="#1A1A18" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="nav-label">Perfil</div><div class="nav-dot"></div></div>
+          </div>
+        </div>
+        <div class="annotations">
+          <div class="annotation" style="margin-top:56px;animation-delay:0.1s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Avatar com inicial</div><div class="annotation-desc">Bloco preto com letra — identidade sem foto obrigatória</div></div></div>
+          <div class="annotation" style="margin-top:52px;animation-delay:0.2s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Plano em pílula</div><div class="annotation-desc">Badge sutil — convida ao upgrade sem pressionar</div></div></div>
+          <div class="annotation" style="margin-top:72px;animation-delay:0.3s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">3 stats em serif</div><div class="annotation-desc">Números grandes em itálico — celebração dos hábitos</div></div></div>
+          <div class="annotation" style="margin-top:52px;animation-delay:0.4s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Lista de ajustes</div><div class="annotation-desc">Ícone + label + seta — padrão iOS reconhecível</div></div></div>
+          <div class="annotation" style="margin-top:160px;animation-delay:0.5s"><div class="annotation-line"></div><div class="annotation-content"><div class="annotation-title">Sair em vermelho</div><div class="annotation-desc">Ação destrutiva sinalizada — impossível de ignorar</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ BARRA FIXA ══════════════ -->
+<div class="nav-bar">
+  <button class="nav-prev" id="btn-prev" onclick="navigate(-1)" disabled>← Anterior</button>
+  <div class="nav-dots" id="nav-dots"></div>
+  <button class="nav-next" id="btn-next" onclick="navigate(1)">Próximo →</button>
+</div>
+
 <script>
-  function showTab(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('screen-' + id).classList.add('active');
-    event.currentTarget.classList.add('active');
-    // re-trigger annotations animation
-    document.querySelectorAll('#screen-' + id + ' .annotation').forEach((a, i) => {
+  const TOTAL = 6;
+  let current = 0;
+  const labels = ['Login','Hoje','Add Tarefa','Agenda','Projetos','Perfil'];
+
+  const dotsEl = document.getElementById('nav-dots');
+  labels.forEach((lbl, i) => {
+    const d = document.createElement('div');
+    d.className = 'nav-dot-item' + (i === 0 ? ' active' : '');
+    d.title = lbl;
+    d.style.cursor = 'pointer';
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(index) {
+    document.getElementById('screen-' + current).classList.remove('active');
+    current = index;
+    const el = document.getElementById('screen-' + current);
+    el.classList.add('active');
+    el.querySelectorAll('.annotation').forEach(a => {
       a.style.animation = 'none';
-      a.offsetHeight;
+      void a.offsetHeight;
       a.style.animation = '';
     });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    dotsEl.querySelectorAll('.nav-dot-item').forEach((d, i) => d.classList.toggle('active', i === current));
+    document.getElementById('btn-prev').disabled = current === 0;
+    document.getElementById('btn-next').disabled = false;
+    document.getElementById('btn-next').textContent = current === TOTAL - 1 ? 'Início ↺' : 'Próximo →';
   }
+
+  function navigate(dir) {
+    if (dir === 1 && current === TOTAL - 1) { goTo(0); return; }
+    goTo(Math.max(0, Math.min(TOTAL - 1, current + dir)));
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   navigate(-1);
+  });
 </script>
 </body>
 </html>
